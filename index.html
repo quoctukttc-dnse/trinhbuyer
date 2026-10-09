@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tạo file SS từ PO Follow-up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: two-column workbench — left rail = inputs (file, lookup, shared info), right = SS line table with export bar */
+:root{
+  --bg:#f3f4f7; --panel:#ffffff; --line:#dfe2ea; --ink:#1b2130; --muted:#5e6678;
+  --accent:#2d4bb3; --accent-ink:#ffffff; --accent-soft:#e7ecfb;
+  --warn:#9a5b00; --warn-soft:#fdf1dc; --ok:#1f7a4d; --ok-soft:#e1f3ea; --bad:#b3261e; --bad-soft:#fbe5e3;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151d; --panel:#1a1e28; --line:#2c3242; --ink:#e6e9f1; --muted:#9aa2b5;
+  --accent:#8ea6ff; --accent-ink:#0e1430; --accent-soft:#232c4d;
+  --warn:#f0b65a; --warn-soft:#3a2c14; --ok:#6fd3a0; --ok-soft:#173326; --bad:#ff8a80; --bad-soft:#3d1c1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151d; --panel:#1a1e28; --line:#2c3242; --ink:#e6e9f1; --muted:#9aa2b5;
+  --accent:#8ea6ff; --accent-ink:#0e1430; --accent-soft:#232c4d;
+  --warn:#f0b65a; --warn-soft:#3a2c14; --ok:#6fd3a0; --ok-soft:#173326; --bad:#ff8a80; --bad-soft:#3d1c1a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1400px;margin:0 auto;padding-inline:16px;padding-block:20px 96px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:18px}
+h1{font-size:1.45rem;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0;max-width:70ch}
+.flow{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.flow b{color:var(--accent);font-weight:500}
+.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.step{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.step i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11px;letter-spacing:0}
+.drop{border:1.5px dashed var(--line);border-radius:var(--r);padding:18px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{display:block;font-weight:600}
+.drop small{color:var(--muted)}
+.drop input{display:none}
+.file-ok{margin-top:10px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.fname{font-family:var(--f-mono);font-size:12px;word-break:break-all}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.inv{border-color:var(--accent);color:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.seg button{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:500;padding:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=date],textarea,input[type=number]{width:100%;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+textarea{font-family:var(--f-mono);font-size:13px;min-height:84px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fields .full{grid-column:1/-1}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.btn{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.sugg{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;max-height:120px;overflow:auto}
+.sugg button{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:4px;padding:2px 6px;cursor:pointer}
+.sugg button:hover{border-color:var(--accent);color:var(--accent)}
+.msg{border-radius:6px;padding:8px 10px;font-size:13px;margin-top:10px}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.tbl-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.tbl-head h2{font-size:1rem;margin:0}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:1500px}
+td:nth-child(3){min-width:150px}td:nth-child(4){min-width:240px}td:nth-child(5),td:nth-child(6){min-width:170px}td:nth-child(8),td:nth-child(9),td:nth-child(10){min-width:140px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--bg);font-weight:600;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+th small{display:block;text-transform:none;letter-spacing:0;font-weight:400;font-family:var(--f-mono);color:var(--accent)}
+td.mono{font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.off td{opacity:.45}
+td input{padding:4px 6px;font-size:12.5px;min-width:90px}
+td input.q{width:90px;text-align:right}
+.tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--bg);border:1px solid var(--line);color:var(--muted);margin:1px 2px 0 0;white-space:nowrap}
+.tag.fix{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.ico{border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:12px;padding:2px 4px;border-radius:4px}
+.ico:hover{color:var(--accent);background:var(--accent-soft)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px 18px;font-size:12.5px;margin:0}
+.map div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:3px 0}
+.map dt{font-family:var(--f-mono);font-size:11.5px;color:var(--accent)}
+.map dd{margin:0;color:var(--muted);text-align:right}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.count{font-variant-numeric:tabular-nums}
+.count b{font-size:1.1rem}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Tạo file Shipment Sample (SS)</h1>
+      <p class="sub">Thả file PO follow-up, chọn PO hoặc số Invoice, kiểm tra các dòng rồi xuất file SS theo đúng cột sheet “2026”.</p>
+    </div>
+    <div class="flow">PO follow-up <b>→</b> chọn PO / INV <b>→</b> nhập Batch <b>→</b> SS.xlsx</div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail">
+      <section class="panel" aria-labelledby="s1">
+        <p class="step" id="s1"><i>1</i>File PO follow-up</p>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Chọn file PO follow-up">
+          <strong>Thả file .xlsx vào đây</strong>
+          <small>hoặc bấm để chọn file</small>
+          <input type="file" id="file" accept=".xlsx,.xlsm,.xls">
+        </div>
+        <div id="fileInfo" class="file-ok" hidden></div>
+      </section>
+
+      <section class="panel" aria-labelledby="s2">
+        <p class="step" id="s2"><i>2</i>Tìm theo</p>
+        <div class="seg" role="group" aria-label="Chế độ tìm">
+          <button type="button" id="modePo" aria-pressed="true">Số PO</button>
+          <button type="button" id="modeInv" aria-pressed="false">Số Invoice</button>
+        </div>
+        <label for="terms" id="termsLbl">Danh sách PO (mỗi dòng một số, hoặc cách nhau bằng dấu phẩy / dấu +)</label>
+        <textarea id="terms" placeholder="SOO0021600&#10;UNITEXTECH-0210"></textarea>
+        <div class="row">
+          <button class="btn" id="find" disabled>Tìm dòng</button>
+          <button class="btn ghost" id="clearTerms" type="button">Xoá</button>
+        </div>
+        <label for="quick" style="margin-top:12px">Gợi ý nhanh</label>
+        <input type="text" id="quick" placeholder="Gõ vài ký tự để lọc…" disabled>
+        <div class="sugg" id="sugg"></div>
+        <div id="searchMsg"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="s3">
+        <p class="step" id="s3"><i>3</i>Thông tin chung cho file SS</p>
+        <div class="fields">
+          <div class="full"><label for="buyer">Buyer Name</label><input type="text" id="buyer" placeholder="ten@scavi.com.vn"></div>
+          <div><label for="sendDate">Ngày Buyer gửi RM</label><input type="date" id="sendDate"></div>
+          <div><label for="supDate">Ngày NCC gửi SS</label><input type="date" id="supDate"></div>
+          <div class="full"><label for="awb">AWB / tracking</label><input type="text" id="awb" placeholder="Có thể để trống"></div>
+          <div class="full"><label for="sheetName">Tên sheet</label><input type="text" id="sheetName" value="2026"></div>
+        </div>
+        <p class="hint">Buyer Name được nhớ trên máy này cho lần sau.</p>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="panel">
+        <div class="tbl-head">
+          <h2 id="tblTitle">Các dòng sẽ đưa vào SS</h2>
+          <div class="row" style="margin:0">
+            <button class="ico" id="selAll" type="button">Chọn tất cả</button>
+            <button class="ico" id="selNone" type="button">Bỏ chọn</button>
+            <button class="ico" id="clearRows" type="button">Xoá bảng</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:28px"></th>
+              <th>PO<small>D</small></th>
+              <th>Supplier<small>E</small></th>
+              <th>Item<small>F</small></th>
+              <th>Code color<small>G</small></th>
+              <th>Color<small>H</small></th>
+              <th>Batch no#<small>I · nhập tay</small></th>
+              <th>Customer<small>J</small></th>
+              <th>Story<small>K</small></th>
+              <th>BU name<small>Q</small></th>
+              <th>Qty<small>S</small></th>
+              <th>Nguồn</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="rows"><tr><td colspan="13" class="empty">Chưa có dòng nào. Thả file PO follow-up ở bước 1, nhập PO hoặc Invoice ở bước 2 rồi bấm <b>Tìm dòng</b>.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="mapT">
+        <p class="step" id="mapT">Cột SS lấy từ đâu trong PO follow-up</p>
+        <dl class="map">
+          <div><dt>D · PO</dt><dd>PO No. / PO SCAF</dd></div>
+          <div><dt>E · SUPPLIER</dt><dd>Supplier</dd></div>
+          <div><dt>F · Item</dt><dd>Article Supplier (thiếu thì RM Name)</dd></div>
+          <div><dt>G · Code color</dt><dd>Supplier color code</dd></div>
+          <div><dt>H · Color</dt><dd>Color</dd></div>
+          <div><dt>J · Customer</dt><dd>Customer Code</dd></div>
+          <div><dt>K · Story</dt><dd>Story</dd></div>
+          <div><dt>Q · BU name</dt><dd>BU name</dd></div>
+          <div><dt>S · quantity</dt><dd>Order Quantity · theo INV: Qty_Inv</dd></div>
+          <div><dt>A, B, P, R</dt><dd>Nhập ở bước 3</dd></div>
+          <div><dt>I · Batch no#</dt><dd>Nhập trong bảng</dd></div>
+          <div><dt>C, L–O, T–V</dt><dd>Để trống cho QC</dd></div>
+        </dl>
+        <p class="hint">Một PO có thể xuất hiện ở nhiều sheet (PO follow-up- tracking, SHIPPED, DATA SCAX…). Công cụ gộp theo PO + Item + Color, ưu tiên dữ liệu SAP ở sheet tracking và lấy thêm Supplier color code từ SHIPPED. Nhãn <span class="tag fix">lệch cột</span> nghĩa là dòng gốc trong SHIPPED bị dán lệch cột, công cụ đã đọc lại, nên kiểm tra số lượng.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <div class="count"><b id="nSel">0</b> dòng được chọn · <span id="nAll">0</span> dòng trong bảng</div>
+    <div class="row" style="margin:0">
+      <span id="exportMsg" class="hint" style="margin:0"></span>
+      <button class="btn" id="export" disabled>Tạo file SS</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="core.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var state={parsed:null,mode:'po',rows:[],fileName:''};
+  var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var today=new Date(); var iso=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  $('sendDate').value=iso(today);
+  $('buyer').value=store.get('ss.buyer')||'';
+  $('buyer').addEventListener('change',function(){store.set('ss.buyer',this.value.trim())});
+
+  // ---------- file ----------
+  var drop=$('drop'),fileIn=$('file');
+  drop.addEventListener('click',function(){fileIn.click()});
+  drop.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fileIn.click()}});
+  ['dragenter','dragover'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.add('over')})});
+  ['dragleave','drop'].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.remove('over')})});
+  drop.addEventListener('drop',function(e){var f=e.dataTransfer.files[0];if(f)load(f)});
+  fileIn.addEventListener('change',function(){if(this.files[0])load(this.files[0]);this.value=''});
+
+  function load(f){
+    var info=$('fileInfo'); info.hidden=false;
+    info.innerHTML='<div><span class="spin"></span>Đang đọc '+esc(f.name)+'… file lớn có thể mất vài giây.</div>';
+    var rd=new FileReader();
+    rd.onload=function(){
+      setTimeout(function(){
+        try{
+          var wb=XLSX.read(new Uint8Array(rd.result),{type:'array',cellDates:true,dense:true});
+          state.parsed=SSCore.parseWorkbook(XLSX,wb); state.fileName=f.name;
+          var p=state.parsed;
+          if(!p.sources.length){info.innerHTML='<div class="msg bad">Không tìm thấy sheet nào có cột “PO No.” và “Supplier”. Hãy kiểm tra lại đúng file PO follow-up.</div>';return}
+          info.innerHTML='<div class="fname">'+esc(f.name)+'</div>'+
+            '<div><b>'+p.index.poList.length.toLocaleString('vi-VN')+'</b> PO · <b>'+p.index.invList.length+'</b> Invoice</div>'+
+            '<div class="chips">'+p.sources.map(function(s){return '<span class="chip'+(s.hasInv?' inv':'')+'" title="'+(s.hasInv?'Có cột Inv_No':'Không có cột Inv_No')+'">'+esc(s.sheet)+' · '+s.rows+'</span>'}).join('')+'</div>';
+          $('find').disabled=false; $('quick').disabled=false; renderSugg();
+          if(!p.index.invList.length) $('searchMsg').innerHTML='<div class="msg warn">File này chưa có số Invoice (cột Inv_No trống), nên chỉ tìm được theo PO.</div>'; else $('searchMsg').innerHTML='';
+        }catch(err){info.innerHTML='<div class="msg bad">Không đọc được file: '+esc(err.message)+'</div>'}
+      },30);
+    };
+    rd.readAsArrayBuffer(f);
+  }
+
+  // ---------- search ----------
+  function setMode(m){
+    state.mode=m; $('modePo').setAttribute('aria-pressed',m==='po'); $('modeInv').setAttribute('aria-pressed',m==='inv');
+    $('termsLbl').textContent=m==='po'?'Danh sách PO (mỗi dòng một số, hoặc cách nhau bằng dấu phẩy / dấu +)':'Danh sách số Invoice (mỗi dòng một số)';
+    $('terms').placeholder=m==='po'?'SOO0021600\nUNITEXTECH-0210':'24LHG0447';
+    renderSugg();
+  }
+  $('modePo').onclick=function(){setMode('po')}; $('modeInv').onclick=function(){setMode('inv')};
+  $('clearTerms').onclick=function(){$('terms').value='';$('searchMsg').innerHTML=''};
+  $('quick').addEventListener('input',renderSugg);
+  function renderSugg(){
+    var box=$('sugg'); box.innerHTML=''; if(!state.parsed) return;
+    var q=$('quick').value.trim().toLowerCase();
+    var list=state.mode==='po'?state.parsed.index.poList:state.parsed.index.invList;
+    var hits=[]; for(var i=0;i<list.length&&hits.length<40;i++){ if(!q||list[i].indexOf(q)>=0) hits.push(list[i]); }
+    if(!q&&state.mode==='po'){box.innerHTML='<span class="hint" style="margin:0">Gõ vài ký tự (vd. soo002, techwork) để hiện gợi ý.</span>';return}
+    if(!hits.length){box.innerHTML='<span class="hint" style="margin:0">Không có kết quả.</span>';return}
+    hits.forEach(function(h){
+      var lines=state.mode==='po'?state.parsed.index.byPo[h]:state.parsed.index.byInv[h];
+      var label=state.mode==='po'?lines[0].po:lines[0].inv;
+      var b=document.createElement('button'); b.type='button'; b.textContent=label+' ('+lines.length+')';
+      b.onclick=function(){var t=$('terms'); var cur=SSCore.splitTerms(t.value); if(cur.indexOf(label)<0){cur.push(label)} t.value=cur.join('\n')};
+      box.appendChild(b);
+    });
+  }
+  $('find').onclick=function(){
+    if(!state.parsed) return;
+    var res=SSCore.search(state.parsed.index,state.mode,$('terms').value);
+    var have={}; state.rows.forEach(function(r){have[r.uid]=1});
+    var added=0;
+    res.lines.forEach(function(l){
+      var uid=[l.po,l.inv||'',l.article,l.color||l.rmname].join('|');
+      if(have[uid]) return; have[uid]=1; added++;
+      state.rows.push(Object.assign({},l,{uid:uid,sel:true,batch:'',qtyOut:l.qtyOut}));
+    });
+    var m='';
+    if(added) m+='<div class="msg ok">Đã thêm '+added+' dòng.</div>'; else if(res.lines.length) m+='<div class="msg warn">Các dòng này đã có trong bảng.</div>';
+    if(res.missing.length) m+='<div class="msg warn">Không tìm thấy: '+res.missing.map(esc).join(', ')+'. File follow-up có thể chưa cập nhật PO/INV này.</div>';
+    $('searchMsg').innerHTML=m; render();
+  };
+
+  // ---------- table ----------
+  function src(r){
+    var t=(r.sheets||[]).map(function(s){return '<span class="tag">'+esc(s)+'</span>'}).join('');
+    if(r.inv) t+='<span class="tag">INV '+esc(r.inv)+'</span>';
+    if(r.fixed) t+='<span class="tag fix" title="Dòng gốc bị lệch cột trong sheet SHIPPED">lệch cột</span>';
+    return t;
+  }
+  function render(){
+    var tb=$('rows');
+    if(!state.rows.length){tb.innerHTML='<tr><td colspan="13" class="empty">Chưa có dòng nào. Thả file PO follow-up ở bước 1, nhập PO hoặc Invoice ở bước 2 rồi bấm <b>Tìm dòng</b>.</td></tr>';}
+    else tb.innerHTML=state.rows.map(function(r,i){
+      return '<tr class="'+(r.sel?'':'off')+'">'+
+        '<td><input type="checkbox" id="c'+i+'" data-i="'+i+'" data-f="sel" '+(r.sel?'checked':'')+' aria-label="Chọn dòng"></td>'+
+        '<td class="mono">'+esc(r.po)+'</td><td>'+esc(r.supplier)+'</td><td>'+esc(r.article||r.rmname)+'</td>'+
+        '<td>'+esc(r.scc)+'</td><td>'+esc(r.color||r.rmname)+'</td>'+
+        '<td><input type="text" id="b'+i+'" data-i="'+i+'" data-f="batch" value="'+esc(r.batch)+'" placeholder="Batch"></td>'+
+        '<td>'+esc(r.customer)+'</td><td>'+esc(r.story)+'</td><td>'+esc(r.bu)+'</td>'+
+        '<td class="num"><input class="q" type="number" step="any" id="q'+i+'" data-i="'+i+'" data-f="qtyOut" value="'+esc(r.qtyOut)+'"> <span class="hint">'+esc(r.unit)+'</span></td>'+
+        '<td>'+src(r)+'</td>'+
+        '<td style="white-space:nowrap"><button class="ico" data-dup="'+i+'" title="Nhân đôi dòng để nhập batch khác">+ batch</button><button class="ico" data-del="'+i+'" title="Xoá dòng">✕</button></td></tr>';
+    }).join('');
+    var n=state.rows.filter(function(r){return r.sel}).length;
+    $('nSel').textContent=n; $('nAll').textContent=state.rows.length; $('export').disabled=!n;
+  }
+  $('rows').addEventListener('input',function(e){
+    var i=e.target.dataset.i,f=e.target.dataset.f; if(i==null) return;
+    var r=state.rows[+i]; if(f==='sel'){r.sel=e.target.checked;render()} else r[f]=e.target.value;
+  });
+  $('rows').addEventListener('click',function(e){
+    var d=e.target.dataset;
+    if(d.dup!=null){var r=state.rows[+d.dup];var c=Object.assign({},r,{uid:r.uid+'#'+Date.now(),batch:''});state.rows.splice(+d.dup+1,0,c);render();var nb=$('b'+(+d.dup+1));if(nb)nb.focus()}
+    if(d.del!=null){state.rows.splice(+d.del,1);render()}
+  });
+  $('selAll').onclick=function(){state.rows.forEach(function(r){r.sel=true});render()};
+  $('selNone').onclick=function(){state.rows.forEach(function(r){r.sel=false});render()};
+  $('clearRows').onclick=function(){state.rows=[];render()};
+
+  // ---------- export ----------
+  var dlP=(window.claude&&window.claude.use)?window.claude.use('downloads'):Promise.resolve(null);
+  $('export').onclick=function(){
+    var sel=state.rows.filter(function(r){return r.sel}); if(!sel.length) return;
+    var opts={buyer:$('buyer').value.trim(),sendDate:$('sendDate').value,supplierDate:$('supDate').value,awb:$('awb').value.trim(),sheetName:($('sheetName').value.trim()||'SS').slice(0,31)};
+    var wb=SSCore.buildWorkbook(XLSX,sel,opts);
+    var pos=[]; sel.forEach(function(r){if(pos.indexOf(r.po)<0)pos.push(r.po)});
+    var name='SS_'+(pos.length<=2?pos.join('_'):pos[0]+'_+'+(pos.length-1)+'PO')+'_'+opts.sendDate.replace(/-/g,'')+'.xlsx';
+    name=name.replace(/[\\/:*?"<>|]/g,'-');
+    var buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    var msg=$('exportMsg'); msg.textContent='';
+    dlP.then(function(dl){
+      if(dl){
+        return dl.save({filename:name,data:new Blob([buf])}).then(function(){msg.textContent='Đã lưu '+name},function(err){
+          msg.textContent=err&&err.code==='declined'?'Đã huỷ lưu file.':'Không lưu được file ('+(err&&err.code||'lỗi')+').';
+        });
+      }
+      try{XLSX.writeFile(wb,name);msg.textContent='Đã tạo '+name}catch(e){msg.textContent='Trình xem này không cho tải file. Hãy mở trang trong trình duyệt.'}
+    });
+  };
+  render();
+})();
+</script>
+
+</body>
+</html>
